@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import json
 from collections import defaultdict
@@ -20,30 +22,31 @@ pastels_hex_color_theme = [
 
 def build_clusters(nodes):
     clusters = defaultdict(list)
+
     for node in nodes:
-        parts = node.split("/")
-        cluster_path = "/".join(parts[:-1]) if len(parts) > 1 else ""
+        cluster_path = "/".join(node.split("/")[:-1])
         clusters[cluster_path].append(node)
+
     return clusters
 
 
 def get_cluster(node):
-    return "/".join(node.split("/")[:-1]) if "/" in node else ""
+    return "/".join(node.split("/")[:-1])
 
 
 def generate_color(index: int):
     """Generate a pastel color based on the cluster name."""
-    # Convert the name to a consistent hash value
-
-    return pastels_hex_color_theme[index]
+    return pastels_hex_color_theme[index % len(pastels_hex_color_theme)]
 
 
 def generate_dot(data):
     nodes = data["nodes"]
     edges = data["edges"]
 
+    # only keep nodes with edges
     nodes = [n for n in nodes if any(s == n or e == n for s, e in edges)]
 
+    # group nodes by parent folder
     clusters = build_clusters(nodes)
 
     dot = [
@@ -62,7 +65,6 @@ def generate_dot(data):
 
         if cluster_path:
             cluster_label = cluster_path[0 if not parents else len(parents[-1]) :]
-            print(cluster_path, cluster_nodes, file=sys.stderr)
             color = pastels_hex_color_theme[(indent - 1) % len(pastels_hex_color_theme)]
             dot.append(f'{sub_indent}subgraph "cluster_{cluster_path}" {{')
             dot.append(f'{sub_indent}    label="{cluster_label}";')
